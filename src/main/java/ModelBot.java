@@ -11,22 +11,27 @@ import com.gargoylesoftware.htmlunit.html.HtmlSubmitInput;
 import com.gargoylesoftware.htmlunit.html.HtmlTable;
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
+
 import java.util.HashMap;
 
-public class ModelBot {
+public class ModelBot extends Thread{
     private Viewer viewer;
     private boolean isAuthorized;
 
+    private String login;
+    private String password;
+
     private WebClient webClient;
+
     private HtmlPage homePage;
 
     private HtmlPage pageMyPublication;
 
     public ModelBot(Viewer viewer) throws Exception{
-        this.viewer = viewer;
         webClient = new WebClient(BrowserVersion.FIREFOX_45);
         homePage = webClient.getPage("http://diesel.elcat.kg/");
         System.out.println("Открываем страницу"+homePage.getTitleText());
+        this.viewer = viewer;
     }
 
     public void logoutAcc() throws Exception{
@@ -44,15 +49,16 @@ public class ModelBot {
                     if(isAuthorized){
                         logoutAcc();
                     }
-                    submittingAuthorisationForm(viewer.getLogin(), viewer.getPassword());
+                    login = viewer.getLogin();
+                    password = viewer.getPassword();
+                    submittingAuthorisationForm();
                 }catch (Exception ex){
                     System.out.println(ex);
                 }
-
         }
     }
 
-    public void submittingAuthorisationForm(String login, String password) throws Exception {
+    public void submittingAuthorisationForm() throws Exception {
         //Загружаем форму
         homePage = webClient.getPage("https://diesel.elcat.kg/index.php?app=core&module=global&section=login");
         System.out.println(homePage.getTitleText());
@@ -69,6 +75,7 @@ public class ModelBot {
         System.out.println(homePage.getTitleText());
         if(homePage.getTitleText().equals("Diesel Forum")){
             isAuthorized = true;
+            start();
         }
         System.out.println("Авторизовано:"+isAuthorized);
     }
@@ -89,7 +96,20 @@ public class ModelBot {
         return publicationHashList;
     }
 
-    public Boolean isAuth(){
-        return isAuthorized;
+    @Override
+    public void run(){
+        try {
+            while(true){
+                if(isAuthorized) {
+                    homePage.refresh();
+                    System.out.println("Обновление страницы");
+                    viewer.setStatus(isAuthorized);
+                    viewer.setThemesAmount(getPublications().size());
+                    Thread.sleep(60000);
+                }
+            }
+        }catch (Exception ex){
+            System.out.println(ex);
+        }
     }
 }
