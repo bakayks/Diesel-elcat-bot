@@ -1,13 +1,10 @@
-import com.sun.istack.internal.Nullable;
-import com.sun.xml.internal.messaging.saaj.soap.JpegDataContentHandler;
-
-import javax.swing.*;
-import javax.swing.border.Border;
-import java.awt.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.image.ImageObserver;
-import java.awt.image.ImageProducer;
+import javax.swing.JTextField;
+import javax.swing.JPanel;
+import javax.swing.JFrame;
+import javax.swing.ImageIcon;
+import javax.swing.JLabel;
+import javax.swing.JButton;
+import java.awt.Font;
 
 public class Viewer  {
     private static final String BOT_VERSION = "1.1";
@@ -25,7 +22,7 @@ public class Viewer  {
 
         //Панель статистики
         JPanel statPanel = getStatJPanel();
-        statPanel.setBounds(225, 0, 770, 110);
+        statPanel.setBounds(220, 0, 780, 110);
 
         JFrame frame = new JFrame("UpBot Diesel-Elcat.kg by "+AUTHOR+". Bot version-"+BOT_VERSION);
         ImageIcon img = new ImageIcon("src/main/resources/img/logo.png");
