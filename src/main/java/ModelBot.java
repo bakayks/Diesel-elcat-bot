@@ -22,10 +22,10 @@ public class ModelBot extends Thread{
     private String password;
 
     private WebClient webClient;
-
     private HtmlPage homePage;
-
     private HtmlPage pageMyPublication;
+
+    private String[][] publications;
 
     public ModelBot(Viewer viewer) throws Exception{
         webClient = new WebClient(BrowserVersion.FIREFOX_45);
@@ -52,6 +52,7 @@ public class ModelBot extends Thread{
                     login = viewer.getLogin();
                     password = viewer.getPassword();
                     submittingAuthorisationForm();
+                    start();
                 }catch (Exception ex){
                     System.out.println(ex);
                 }
@@ -64,36 +65,40 @@ public class ModelBot extends Thread{
         System.out.println(homePage.getTitleText());
         DomElement form1 = homePage.getElementById("login");
         HtmlForm form =(HtmlForm) form1;
+
         //Загружаем ввод логина и пароля, присваиваем им значения
         HtmlTextInput textInputLogin = form.getInputByName("ips_username");
         textInputLogin.setValueAttribute(login);
         HtmlPasswordInput textInputPassword = form.getInputByName("ips_password");
         textInputPassword.setValueAttribute(password);
+
         //Загружаем кнопку и нажимаем ее для авторизации. После нажатия переходим на другую страницу
         HtmlSubmitInput button = form.getInputByValue("Войти");
         homePage = button.click();
         System.out.println(homePage.getTitleText());
         if(homePage.getTitleText().equals("Diesel Forum")){
             isAuthorized = true;
-            start();
         }
         System.out.println("Авторизовано:"+isAuthorized);
     }
 
-    public HashMap<String, String> getPublications() throws Exception {
-        HashMap<String, String> publicationHashList = new HashMap<String, String>();
+    public String[][] getPublications() throws Exception {
         pageMyPublication = webClient.getPage("http://diesel.elcat.kg/index.php?app=core&module=search&do=user_activity&search_app_filters[forums][searchInKey]=&userMode=title");
         HtmlTable scriptsDiv = (HtmlTable) pageMyPublication.getElementById("forum_table");
         System.out.println(pageMyPublication.getTitleText());
         List<HtmlElement> elementsIdPublications = scriptsDiv.getElementsByTagName("h4");
-        for(HtmlElement htmlElement : elementsIdPublications){
-            String linkName = htmlElement.getElementsByTagName("a").get(0).getTextContent();
-            HtmlAnchor htmlAnchorElement = (HtmlAnchor) htmlElement.getElementsByTagName("a").get(0);
+        int sizeList = elementsIdPublications.size();
+        String[][] publicationList = new String[2][sizeList];
+        for(int i = 0; i<elementsIdPublications.size(); i++){
+            String linkName = elementsIdPublications.get(i).getElementsByTagName("a").get(0).getTextContent();
+            HtmlAnchor htmlAnchorElement = (HtmlAnchor) elementsIdPublications.get(i).getElementsByTagName("a").get(0);
             String link = htmlAnchorElement.getHrefAttribute();
             System.out.println(linkName+" "+link);
-            publicationHashList.put(linkName, link);
+            publicationList[0][i] = linkName;
+            publicationList[1][i] = link;
         }
-        return publicationHashList;
+        publications = publicationList;
+        return publicationList;
     }
 
     @Override
@@ -104,10 +109,13 @@ public class ModelBot extends Thread{
                     homePage.refresh();
                     System.out.println("Обновление страницы");
                     viewer.setStatus(isAuthorized);
-                    viewer.setThemesAmount(getPublications().size());
+                    viewer.setThemesAmount(getPublications()[0].length);
+                    viewer.setUpdatePublicationList(publications[0]);
                     Thread.sleep(60000);
-                }
-            }
+                }else{
+                    viewer.setStatus(false);
+                    viewer.setThemesAmount(0);
+                }            }
         }catch (Exception ex){
             System.out.println(ex);
         }
